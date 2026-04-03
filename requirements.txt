@@ -1,7 +1,3 @@
---prefer-binary
---only-binary llama-cpp-python
---extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
-
 
 streamlit>=1.50.0
 llama-cpp-python>=0.3.0
