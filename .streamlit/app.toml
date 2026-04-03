@@ -1,0 +1,5 @@
+[app]
+simulate = false
+model_name = "Qwen2.5 Coder 7B"
+memory_store_size = 10
+memory_store_hits = 3

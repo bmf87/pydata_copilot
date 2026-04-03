@@ -1,0 +1,36 @@
+[data-testid="stChatInput"] {
+    padding-bottom: 40px;
+}
+
+/* 2. Target the WRAPPER that holds both the textarea and the send button */
+[data-testid="stChatInput"] > div {
+    background-color: #f0f2f6 !important;
+    border: 2px solid #27A9F5 !important; /* Blue border */
+    border-radius: 15px !important;       /* Rounded corners */
+}
+
+/* 3. Adjust the wrapper on focus-within (when user clicks inside) */
+[data-testid="stChatInput"] > div:focus-within {
+    border: 2px solid #2768F5 !important; /* Darker blue on focus */
+    box-shadow: 0px 0px 10px rgba(232, 243, 245, 0.5) !important;
+}
+
+/* 4. Remove the default border/background from the actual textarea so it blends into our new wrapper */
+[data-testid="stChatInputTextArea"] {
+    background-color: transparent !important;
+    border: none !important;
+    color: #333333 !important;
+    box-shadow: none !important;
+}
+
+/* 5. Target the send button */
+[data-testid="stChatInput"] button {
+    background-color: transparent !important;
+    color: #27A9F5 !important;
+}
+
+/* Hover effect for the send button */
+[data-testid="stChatInput"] button:hover {
+    background-color: #e8f3f5 !important;
+    border-radius: 50% !important;
+}

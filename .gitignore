@@ -1,0 +1,21 @@
+# Ignore VS Code
+.vscode/ 
+
+# Ignore Python venv
+.venv/
+
+# Ignore test data
+data/
+
+# Ignore tests
+tests/
+
+# Ignore os generated files
+.DS_Store
+
+# Ignore secrets
+.streamlit/secrets.toml
+
+# Ignore compiled Python files
+__pycache__/
+*.pyc

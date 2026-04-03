@@ -1,0 +1,15 @@
+streamlit>=1.40.0
+
+llama-cpp-python>=0.3.0
+
+langgraph>=0.2.0
+
+langchain-core>=0.2.0
+
+tomli>=2.4.0; python_version < "3.11"
+
+huggingface_hub>=1.7.1
+
+st_flexible_callout_elements>=0.2.1
+
+xlrd>=2.0.1 # required for reading .xls (BIFF) files
