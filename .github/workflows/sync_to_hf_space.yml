@@ -7,8 +7,10 @@ on:
 jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Fetch all history so push works
           lfs: true # Only needed if you decide to push binary LFS files
@@ -16,4 +18,8 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git push --force https://bfavro73:$HF_TOKEN@huggingface.co/spaces/bfavro73/pydataco main
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git rm -rf --cached ui/images/ || true
+          git commit -m "Exclude images for HF push" || true
+          git push --force https://bfavro73:$HF_TOKEN@huggingface.co/spaces/bfavro73/pydataco HEAD:main
