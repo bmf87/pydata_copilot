@@ -44,14 +44,32 @@ llm = inference.load_inference_model()
 with open("ui/styles/chat_input.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
+def get_image_path(image_key: str):
+    """
+    If running on Hugging Face Spaces, fetch from GitHub raw URL.
+    If running locally, fetch from local disk using IMAGE_LKP.
+    """
+    if os.environ.get("SPACE_ID"):
+        # We are on Hugging Face Spaces! Extract filename and point to GitHub raw
+        filename = Path(constants.IMAGE_LKP[image_key]).name
+        return f"https://raw.githubusercontent.com/bfavro73/pydata-copilot/main/ui/images/{filename}"
+    else:
+        # We are developing locally!
+        return constants.IMAGE_LKP[image_key]
+
 def init_images():
-    global logo_img_b64
-    pydc.user_avatar = constants.IMAGE_LKP["user_avatar"]
-    pydc.assistant_avatar = constants.IMAGE_LKP["assistant_avatar"]
-    pydc.python_logo = constants.IMAGE_LKP["python_logo"]
-    # Encode image in base64
-    logo_img_bytes = Path(pydc.python_logo).read_bytes()
-    logo_img_b64 = base64.b64encode(logo_img_bytes).decode("utf-8")
+    global logo_img_src
+    pydc.user_avatar = get_image_path("user_avatar")
+    pydc.assistant_avatar = get_image_path("assistant_avatar")
+    pydc.python_logo = get_image_path("python_logo")
+    
+    # If the path is a URL, use it directly in HTML tag. Otherwise base64 encode the local file.
+    if pydc.python_logo.startswith("http"):
+        logo_img_src = pydc.python_logo
+    else:
+        logo_img_bytes = Path(pydc.python_logo).read_bytes()
+        logo_img_b64 = base64.b64encode(logo_img_bytes).decode("utf-8")
+        logo_img_src = f"data:image/png;base64,{logo_img_b64}"
 
 def init_session(dataset_handler):
     """Reset the entire session state."""
@@ -138,7 +156,7 @@ init_images()
 st.markdown(
     f"""
     <div style="display: flex; align-items: center; gap: 1rem;">
-        <img src="data:image/png;base64,{logo_img_b64}" width="35">
+        <img src="{logo_img_src}" width="35">
         <h1>{constants.PAGE_TITLE}</h1>
     </div>
     """,

@@ -1,0 +1,19 @@
+name: Sync to Hugging Face Space
+on:
+  push:
+    branches: [main]
+  # Enable manual triggering from Actions tab
+  workflow_dispatch:
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all history so push works
+          lfs: true # Only needed if you decide to push binary LFS files
+      - name: Push to Hub
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git push --force https://bfavro73:$HF_TOKEN@huggingface.co/spaces/bfavro73/pydataco main
