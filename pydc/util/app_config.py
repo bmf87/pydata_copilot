@@ -1,4 +1,7 @@
-import tomli as tomllib
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 from typing import Any, Dict, Optional
 import pydc.util.constants as constants
 
