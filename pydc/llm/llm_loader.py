@@ -17,7 +17,7 @@ def load_inference_model() -> Llama:
         filename=constants.INFERENCE_MODEL_7B,        # Q4_K_M model file
         n_ctx=4096,                                   # context window
         n_threads=4,                                  
-        n_gpu_layers=-1,                              # offloads all layers to VRAM
+        n_gpu_layers=26,                              # partial offload - diagnosing v0.2.62 GPU token bug
         chat_format="chatml",                         # Qwen2.5-Coder uses ChatML; required in v0.2.x
         verbose=False,
     )

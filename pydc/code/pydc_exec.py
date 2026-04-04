@@ -62,7 +62,10 @@ def _sanitize_code(code: str) -> str:
         ln for ln in lines
         if "plt.show" not in ln and ".show(" not in ln and "st.pyplot" not in ln and "display(" not in ln
     ]
-    return "\n".join(cleaned)
+    code = "\n".join(cleaned)
+    # Workaround: v0.2.62 GPU tokenization bug prepends 'G' to short identifiers like 'df' → 'Gdf'
+    code = re.sub(r'\bGdf\b', 'df', code)
+    return code
 
 def parse_llm_response(raw_response: str) -> Dict[str, Any]:
     """
