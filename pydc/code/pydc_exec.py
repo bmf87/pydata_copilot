@@ -119,6 +119,8 @@ def parse_llm_response(raw_response: str) -> Dict[str, Any]:
 
 
 def run_llm_code(code: str, df: pd.DataFrame) :
+    log.debug(f"[run_llm_code] - code: {code}")
+    log.debug(f"[run_llm_code] - df: {df}")
     # Globals the code is allowed to see
     global_ns = {
         "__builtins__": __builtins__,  # or a pruned version if you want tighter sandboxing
