@@ -1,19 +1,31 @@
-FROM python:3.11-slim
+FROM nvidia/cuda:12.3.2-devel-ubuntu22.04
 
 # Prevent writing .pyc files and holding/buffering stdout
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install system deps as needed (git, build-essential, etc.)
+# Tell apt-get we are non-interactive to avoid hanging on tzdata dialogs
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies, Python 3.11, and build tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    cmake \
-    nvidia-cuda-toolkit \
-    git \
-    pkg-config \
+    software-properties-common wget git pkg-config cmake build-essential \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+    python3.11 python3.11-venv python3.11-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Speed up C++ compilation massively and enable OpenBLAS for CPU acceleration
+# Symlink python3 and python to python3.11 cleanly
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 \
+    && update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
+
+# Install pip securely directly to Python 3.11
+RUN wget -qO get-pip.py https://bootstrap.pypa.io/get-pip.py \
+    && python3.11 get-pip.py \
+    && rm get-pip.py
+
+# Speed up C++ compilation massively and enable CUDA for GPU acceleration
 ENV CMAKE_BUILD_PARALLEL_LEVEL=4
 ENV CMAKE_ARGS="-DGGML_CUDA=ON"
 
@@ -35,7 +47,8 @@ COPY --chown=user:user requirements.txt .
 USER user
 
 # Install Python packages
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code
 COPY --chown=user:user . .
