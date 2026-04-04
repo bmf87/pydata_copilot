@@ -16,8 +16,8 @@ def load_inference_model() -> Llama:
         repo_id=constants.INFERENCE_REPO_ID_7B,                   
         filename=constants.INFERENCE_MODEL_7B,        # Q4_K_M model file
         n_ctx=4096,                                   # context window
-        n_threads=8,                                  # adjust for CPU
-        n_gpu_layers=0,                               # >0 if you have GPU offload
+        n_threads=4,                                  
+        n_gpu_layers=-1,                              # offloads all layers to VRAM
         verbose=False,
     )
     return llm
@@ -33,8 +33,8 @@ def load_embedding_model() -> Llama:
         filename=constants.EMBEDDING_MODEL,
         embedding=True,                                  # Crucial for embedding models in llama_cpp
         n_ctx=8192,                                      # nomic-embed-text supports 8192 context window
-        n_threads=8,
-        n_gpu_layers=0,
+        n_threads=4,
+        n_gpu_layers=-1,
         verbose=False,
     )
     return embed_model
