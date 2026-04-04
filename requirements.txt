@@ -1,6 +1,7 @@
 
 streamlit>=1.50.0
-llama-cpp-python==0.2.62 --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu122
+# self-contained manylinux binary with CUDA support
+llama-cpp-python @ https://github.com/abetlen/llama-cpp-python/releases/download/v0.2.62-cu121/llama_cpp_python-0.2.62-cp311-cp311-manylinux_2_31_x86_64.whl
 langgraph>=0.2.0
 langchain-core>=0.2.0
 tomli>=2.4.0; python_version < "3.11"
