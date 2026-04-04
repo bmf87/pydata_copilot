@@ -86,6 +86,7 @@ def call_llm(ctx: Dict) -> Dict:
         chunk_ctr += 1
 
     raw_response = "".join(full_text)
+    log.debug(f"[RAW LLM RESPONSE]:\n{raw_response}")  # temporary diagnostic
     #raw_response = inference.chat_once(llm_prompt)
     status.text(f"Parsing {model_name} response...")
     progress.progress(int(((step_idx + 4) / overall_total_steps) * 100))

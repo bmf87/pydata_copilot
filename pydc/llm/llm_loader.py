@@ -6,7 +6,7 @@ import pydc.util.constants as constants
 from llama_cpp import Llama
 import pydc.util.constants as constants
 
-@st.cache_resource(show_spinner="Loading Qwen 8B model...")
+@st.cache_resource(show_spinner="Loading Qwen 7B model...")
 def load_inference_model() -> Llama:
     """
     Load a GGUF model from a Hugging Face repo using llama_cpp.Llama.from_pretrained.
