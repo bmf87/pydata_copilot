@@ -6,7 +6,7 @@ import pydc.util.constants as constants
 from llama_cpp import Llama
 import pydc.util.constants as constants
 
-@st.cache_resource(show_spinner="Loading Qwen 7B model...")
+@st.cache_resource(show_spinner="Loading Coding model...")
 def load_inference_model() -> Llama:
     """
     Load a GGUF model from a Hugging Face repo using llama_cpp.Llama.from_pretrained.
@@ -16,14 +16,14 @@ def load_inference_model() -> Llama:
         repo_id=constants.INFERENCE_REPO_ID_7B,                   
         filename=constants.INFERENCE_MODEL_7B,        # Q4_K_M model file
         n_ctx=4096,                                   # context window
-        n_threads=4,                                  
-        n_gpu_layers=26,                              # partial offload - diagnosing v0.2.62 GPU token bug
+        n_threads=4,                                  # T4 has 4 vCPUs
+        n_gpu_layers=-1,                              # offload all layers to GPU
         chat_format="chatml",                         # Qwen2.5-Coder uses ChatML; required in v0.2.x
         verbose=False,
     )
     return llm
 
-@st.cache_resource(show_spinner="Loading Nomic Embed model...")
+@st.cache_resource(show_spinner="Loading Embedding model...")
 def load_embedding_model() -> Llama:
     """
     Load a GGUF text embedding model from a Hugging Face repo using llama_cpp.Llama.from_pretrained.
@@ -35,7 +35,7 @@ def load_embedding_model() -> Llama:
         embedding=True,                                  # Crucial for embedding models in llama_cpp
         n_ctx=8192,                                      # nomic-embed-text supports 8192 context window
         n_threads=4,
-        n_gpu_layers=-1,
+        n_gpu_layers=-1,                                 # offload all layers to GPU
         verbose=False,
     )
     return embed_model
