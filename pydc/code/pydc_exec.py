@@ -64,8 +64,8 @@ def _sanitize_code(code: str) -> str:
     ]
     code = "\n".join(cleaned)
     # Workaround: v0.2.62 GPU tokenization bug prepends 'G' to short identifiers like 'df' → 'Gdf'
-    code = re.sub(r'\b[A-Z]df\b', 'df', code)   # catches Gdf, Fdf, etc. - v0.2.62 GPU sampling artifact
-    code = re.sub(r'\b[A-Z] df\b', 'df', code)  # catches 'F df', 'G df' with space variant
+    #code = re.sub(r'\b[A-Z]df\b', 'df', code)   # catches Gdf, Fdf, etc. - v0.2.62 GPU sampling artifact
+    #code = re.sub(r'\b[A-Z] df\b', 'df', code)  # catches 'F df', 'G df' with space variant
     return code
 
 def parse_llm_response(raw_response: str) -> Dict[str, Any]:
