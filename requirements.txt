@@ -2,6 +2,9 @@
 streamlit>=1.50.0
 # self-contained manylinux binary with CUDA support
 llama-cpp-python @ https://github.com/abetlen/llama-cpp-python/releases/download/v0.2.62-cu121/llama_cpp_python-0.2.62-cp311-cp311-manylinux_2_31_x86_64.whl
+# CUDA runtime libraries (provides libcudart.so.12 required by the llama-cpp-python CUDA wheel)
+nvidia-cuda-runtime-cu12
+nvidia-cublas-cu12
 langgraph>=0.2.0
 langchain-core>=0.2.0
 tomli>=2.4.0; python_version < "3.11"

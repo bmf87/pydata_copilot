@@ -4,10 +4,15 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install only minimal runtime system deps (no build tools needed - using pre-built wheel)
+# Install only minimal runtime system deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
+
+# Expose pip-installed NVIDIA CUDA runtime .so files (libcudart.so.12, libcublas.so.12, etc.)
+# to the Linux dynamic linker so llama_cpp can load them at startup.
+ENV LD_LIBRARY_PATH="/home/user/.local/lib/python3.11/site-packages/nvidia/cuda_runtime/lib:\
+/home/user/.local/lib/python3.11/site-packages/nvidia/cublas/lib:${LD_LIBRARY_PATH}"
 
 # Set up a new user named "user" with user ID 1000
 # Hugging Face Spaces strictly runs containers as user 1000
