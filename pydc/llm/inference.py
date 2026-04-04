@@ -17,7 +17,7 @@ def chat_once(messages: List[Dict[str, str]], **gen_kwargs) -> str:
 
     # Get cached LLM instance
     llm: Llama = load_inference_model()
-    resp = llm.create_chat_completion(messages=messages, max_tokens=2048, **gen_kwargs)
+    resp = llm.create_chat_completion(messages=messages, max_tokens=2048, temperature=0, **gen_kwargs)
     return resp["choices"][0]["message"]["content"]
 
 def chat_stream(messages: List[Dict[str, str]], **gen_kwargs) -> Generator[str, None, None]:
@@ -34,7 +34,7 @@ def chat_stream(messages: List[Dict[str, str]], **gen_kwargs) -> Generator[str, 
     
     # Get cached LLM instance
     llm: Llama = load_inference_model()
-    stream = llm.create_chat_completion(messages=messages, stream=True, max_tokens=2048, **gen_kwargs)
+    stream = llm.create_chat_completion(messages=messages, stream=True, max_tokens=2048, temperature=0, **gen_kwargs)
     for chunk in stream:
         delta = chunk["choices"][0]["delta"]
         token = delta.get("content", "")
