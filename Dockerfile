@@ -41,7 +41,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY --chown=user:user . .
 
 # Set HF_HOME so huggingface_hub (used by llama_cpp) caches in a writable directory
-ENV HF_HOME=$HOME/app/.cache/huggingface
+ENV HF_HOME=$HOME/.cache/huggingface
 
 # Streamlit config (disable headless warnings, use Spaces default port 7860)
 ENV STREAMLIT_SERVER_HEADLESS=true
