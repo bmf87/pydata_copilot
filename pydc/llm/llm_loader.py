@@ -18,6 +18,7 @@ def load_inference_model() -> Llama:
         n_ctx=4096,                                   # context window
         n_threads=4,                                  
         n_gpu_layers=-1,                              # offloads all layers to VRAM
+        chat_format="chatml",                         # Qwen2.5-Coder uses ChatML; required in v0.2.x
         verbose=False,
     )
     return llm
