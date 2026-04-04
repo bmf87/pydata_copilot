@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
     libopenblas-dev \
+    git \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # Speed up C++ compilation massively and enable OpenBLAS for CPU acceleration
