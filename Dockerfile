@@ -15,7 +15,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Speed up C++ compilation massively and enable OpenBLAS for CPU acceleration
 ENV CMAKE_BUILD_PARALLEL_LEVEL=4
-ENV CMAKE_ARGS="-DGGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS -DGGML_NATIVE=OFF -DLLAMA_NATIVE=OFF -DCMAKE_C_FLAGS='-mavx -mavx2 -mfma -mf16c' -DCMAKE_CXX_FLAGS='-mavx -mavx2 -mfma -mf16c'"
+ENV CMAKE_ARGS="-DGGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS -DGGML_NATIVE=OFF -DLLAMA_NATIVE=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON -DLLAMA_AVX=ON -DLLAMA_AVX2=ON -DLLAMA_FMA=ON -DLLAMA_F16C=ON"
+ENV OMP_NUM_THREADS=8
+ENV OPENBLAS_NUM_THREADS=8
 
 # Set up a new user named "user" with user ID 1000
 # Hugging Face Spaces strictly runs containers as user 1000
