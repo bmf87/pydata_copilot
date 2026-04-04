@@ -52,7 +52,8 @@ def get_image_path(image_key: str):
     if os.environ.get("SPACE_ID"):
         # We are on Hugging Face Spaces! Extract filename and point to GitHub raw
         filename = Path(constants.IMAGE_LKP[image_key]).name
-        return f"https://raw.githubusercontent.com/bfavro73/pydata-copilot/main/ui/images/{filename}"
+        #return f"https://raw.githubusercontent.com/bfavro73/pydata-copilot/main/ui/images/{filename}"
+        return f"https://github.com/bmf87/pydata_copilot/blob/main/ui/images/{filename}?raw=true"
     else:
         # We are developing locally!
         return constants.IMAGE_LKP[image_key]
