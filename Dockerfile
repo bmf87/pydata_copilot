@@ -1,33 +1,13 @@
-FROM nvidia/cuda:12.3.2-devel-ubuntu22.04
+FROM python:3.11-slim
 
 # Prevent writing .pyc files and holding/buffering stdout
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Tell apt-get we are non-interactive to avoid hanging on tzdata dialogs
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Install dependencies, Python 3.11, and build tools
+# Install only minimal runtime system deps (no build tools needed - using pre-built wheel)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common wget git pkg-config cmake build-essential \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-    python3.11 python3.11-venv python3.11-dev \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
-
-# Symlink python3 and python to python3.11 cleanly
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 \
-    && update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
-
-# Install pip securely directly to Python 3.11
-RUN wget -qO get-pip.py https://bootstrap.pypa.io/get-pip.py \
-    && python3.11 get-pip.py \
-    && rm get-pip.py
-
-# Speed up C++ compilation massively and enable CUDA for GPU acceleration
-ENV CMAKE_BUILD_PARALLEL_LEVEL=4
-ENV CMAKE_ARGS="-DGGML_CUDA=ON"
 
 # Set up a new user named "user" with user ID 1000
 # Hugging Face Spaces strictly runs containers as user 1000
@@ -46,9 +26,8 @@ COPY --chown=user:user requirements.txt .
 # Switch to the new user before installing dependencies
 USER user
 
-# Install Python packages
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Install Python packages (llama-cpp-python pulls pre-built CUDA wheel - no compilation!)
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code
 COPY --chown=user:user . .
