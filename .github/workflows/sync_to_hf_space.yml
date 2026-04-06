@@ -24,8 +24,8 @@ jobs:
           # Create a new branch with no history
           git checkout --orphan hf_deploy
           
-          # Remove the images from the staging area so they aren't included
-          git rm -rf --cached ui/images/ || true
+          # Exclude directories that contain binary/design files not needed on HF Spaces
+          git rm -rf --cached ui/images/ design/ || true
           
           # Commit the current state as a single fresh commit
           git commit -m "Sync to HF Spaces"
