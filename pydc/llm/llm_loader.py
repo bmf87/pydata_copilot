@@ -33,7 +33,7 @@ def load_embedding_model() -> Llama:
         repo_id=constants.EMBEDDING_REPO_ID,
         filename=constants.EMBEDDING_MODEL,
         embedding=True,                                  # Crucial for embedding models in llama_cpp
-        n_ctx=8192,                                      # nomic-embed-text supports 8192 context window
+        n_ctx=2048,                                      # nomic-embed-text native training context; 8192 triggers RoPE overflow warning
         n_threads=4,
         n_gpu_layers=-1,                                 # offload all layers to GPU
         verbose=False,

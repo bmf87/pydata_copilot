@@ -39,6 +39,6 @@ def clean_notebook(filepath):
         print(f"Error processing {filepath}: {e}")
 
 if __name__ == "__main__":
-    notebook_files = glob.glob('notebooks/*.ipynb')
+    notebook_files = glob.glob('*.ipynb')
     for nb in notebook_files:
         clean_notebook(nb)

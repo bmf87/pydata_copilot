@@ -184,12 +184,11 @@ def _trim_namespace(max_memories: int, ts_key: str = MEMORY_TS):
         key=lambda it: it.value.get(ts_key, ""),
     )
     num_to_delete = len(items_sorted) - max_memories
-    log.debug(f"Trimming {num_to_delete} memories from namespace {namespace}")
+    log.debug(f"Staging trim of: {num_to_delete} memories from namespace {namespace}")
     to_delete = items_sorted[:num_to_delete]
 
     for mem_item in to_delete:
         store.delete(namespace, mem_item.key)
-    log.debug(f"DONE Trimming {num_to_delete} memories!\nNew InMemoryStore size: {len(store.search(namespace, filter={}))}")
 
 def get_dataset_summary() -> Dict[str, Any]:
     """
