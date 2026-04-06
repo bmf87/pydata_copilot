@@ -1,0 +1,132 @@
+@startuml PyData Copilot — Part 2a: Prompt Construction & LLM Inference
+
+skinparam backgroundColor #FAFAFA
+skinparam sequence {
+    ArrowColor #2C3E50
+    LifeLineBorderColor #95A5A6
+    LifeLineBackgroundColor #ECF0F1
+    ParticipantBorderColor #2980B9
+    ParticipantBackgroundColor #D6EAF8
+    ParticipantFontColor #1A252F
+    ParticipantFontStyle bold
+    ActorBorderColor #27AE60
+    ActorBackgroundColor #D5F5E3
+    ActorFontColor #1A252F
+    NoteBackgroundColor #FDFEFE
+    NoteBorderColor #BDC3C7
+    NoteFontColor #2C3E50
+    DividerBackgroundColor #D6DBDF
+    DividerFontColor #2C3E50
+}
+skinparam ArrowFontColor #2C3E50
+skinparam defaultFontColor #2C3E50
+skinparam ArrowThickness 1.5
+skinparam ParticipantPadding 12
+
+title <size:14><b>PyData Copilot — Part 2a of 3</b></size>\nPrompt Construction & GPU-Accelerated LLM Inference
+
+participant "Streamlit UI\n(streamlit_app.py)" as ST #D6EAF8
+participant "Turn Pipeline\n(turn.py)" as TP #FDEBD0
+participant "Prompt Builder\n(prompt_utils.py)" as PB #FDEDEC
+participant "Inference Engine\n(inference.py)" as IE #D5F5E3
+participant "Qwen 7B LLM\n(llama-cpp CUDA / T4)" as LLM #D1F2EB
+participant "Code Executor\n(pydc_exec.py)" as CE #F9EBEA
+
+note over ST
+  **Continuing from Part 1** — intent classified as
+  NEW_USER_INTENT or EDIT_USER_INTENT
+end note
+
+activate ST #D6EAF8
+
+== Step 3 of 5 — Prompt Construction ==
+
+ST -> TP : build_coding_prompt(ctx)
+activate TP #FDEBD0
+
+alt intent == NEW_USER_INTENT
+    TP -> PB : build_new_coding_prompt(\n  question, pydc, memories\n)
+    activate PB #FDEDEC
+    PB -> PB : System role:\n• Elite coder persona\n• CRITICAL_REQUIREMENTS\n• FORMAT_REQUIREMENTS\n• FINAL_CHECKLIST
+    PB -> PB : User role:\n• DataFrame schema + dtypes\n• Sample rows (first 3)\n• RULES block\n• USER_QUESTION
+    PB --> TP : messages [system_msg, user_msg]
+    deactivate PB
+
+else intent == EDIT_USER_INTENT
+    TP -> PB : build_editing_code_prompt(\n  question, pydc, memories\n)
+    activate PB #FDEDEC
+    PB -> PB : Extract agent_code from memories\nas CURRENT_CODE block
+    PB -> PB : System role — patch mode:\n• Preserve existing logic\n• Apply incremental changes only
+    PB -> PB : User role:\n• MEMORIES context\n• CURRENT_CODE block\n• USER_QUESTION
+    PB --> TP : messages [system_msg, user_msg]
+    deactivate PB
+end
+
+TP --> ST : ctx["llm_prompt"] updated
+deactivate TP
+ST -> ST : progress.progress(50%)
+ST -> ST : status.text("Calling Qwen 7B…")
+
+== Step 4 of 5 — LLM Inference (GPU) ==
+
+ST -> TP : call_llm(ctx)
+activate TP #FDEBD0
+
+TP -> IE : chat_stream(llm_prompt)
+activate IE #D5F5E3
+
+IE -> LLM : create_chat_completion(\n  messages,\n  stream = True,\n  temperature = 0.1,\n  max_tokens = -1\n)
+activate LLM #D1F2EB
+
+note right of LLM
+  32 transformer layers
+  fully on NVIDIA T4 VRAM.
+  Tokenizer runs on CPU
+  (4 threads).
+end note
+
+loop Token streaming loop
+    LLM --> IE : chunk["choices"][0]["delta"]
+    IE -> IE : token = delta.get("content", "")
+    IE --> TP : yield token
+    TP --> ST : Accumulate token in full_text
+end
+
+LLM --> IE : [EOS] — generation complete
+deactivate LLM
+deactivate IE
+
+TP -> TP : raw_response = "".join(full_text)
+ST -> ST : status.text("Parsing response…")
+
+== Response Parsing ==
+
+TP -> CE : parse_llm_response(raw_response)
+activate CE #F9EBEA
+
+CE -> CE : Strip markdown fences\n(```json ... ```)
+CE -> CE : json.loads() — fast path
+
+note right of CE
+  On JSONDecodeError:
+  _normalize_code_field()
+  converts raw newlines inside
+  "code" to \\n, then retries.
+end note
+
+CE -> CE : _sanitize_code():\nRemove plt.show() calls
+
+CE --> TP : { type, code, return, errors }
+deactivate CE
+
+TP --> ST : ctx["results"] updated
+deactivate TP
+ST -> ST : progress.progress(75%)
+
+note over ST, CE
+  **Continues in Part 2b:** Code Execution → Memory Storage → Result Rendering
+end note
+
+deactivate ST
+
+@enduml

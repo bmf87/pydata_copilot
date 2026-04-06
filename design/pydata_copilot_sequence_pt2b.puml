@@ -1,0 +1,128 @@
+@startuml PyData Copilot — Part 2b: Code Execution & Result Rendering
+
+skinparam backgroundColor #FAFAFA
+skinparam sequence {
+    ArrowColor #2C3E50
+    LifeLineBorderColor #95A5A6
+    LifeLineBackgroundColor #ECF0F1
+    ParticipantBorderColor #2980B9
+    ParticipantBackgroundColor #D6EAF8
+    ParticipantFontColor #1A252F
+    ParticipantFontStyle bold
+    ActorBorderColor #27AE60
+    ActorBackgroundColor #D5F5E3
+    ActorFontColor #1A252F
+    NoteBackgroundColor #FDFEFE
+    NoteBorderColor #BDC3C7
+    NoteFontColor #2C3E50
+    DividerBackgroundColor #D6DBDF
+    DividerFontColor #2C3E50
+}
+skinparam ArrowFontColor #2C3E50
+skinparam defaultFontColor #2C3E50
+skinparam ArrowThickness 1.5
+skinparam ParticipantPadding 12
+
+title <size:14><b>PyData Copilot — Part 2b of 3</b></size>\nCode Execution, Memory Storage & Result Rendering
+
+participant "Streamlit UI\n(streamlit_app.py)" as ST #D6EAF8
+participant "Turn Pipeline\n(turn.py)" as TP #FDEBD0
+participant "Code Executor\n(pydc_exec.py)" as CE #F9EBEA
+participant "Memory Store\n(memory_store.py)" as MS #E8DAEF
+actor "User" as U #D5F5E3
+
+note over ST
+  **Continuing from Part 2a** — parsed LLM result dict in ctx["results"]
+  containing: { type, code, return, errors }
+end note
+
+activate ST #D6EAF8
+
+== Step 5 of 5 — Code Execution ==
+
+ST -> TP : execute_code(ctx)
+activate TP #FDEBD0
+ST -> ST : status.text("Executing code…")
+
+TP -> CE : run_llm_code(\n  code = generated_code,\n  df = pydc.df\n)
+activate CE #F9EBEA
+
+CE -> CE : Build sandboxed namespace:\n{"pd", "np", "plt", "sns", "df",\n "__builtins__"}
+
+CE -> CE : exec(code, global_ns, local_ns)
+
+note right of CE
+  Generated Python runs against
+  the user's uploaded DataFrame.
+  Result variables are captured
+  in local_ns for inspection.
+  Exceptions written to
+  local_ns["__error__"].
+end note
+
+CE --> TP : local_ns dict
+deactivate CE
+
+== Result Classification ==
+
+TP -> CE : classify_code_result(\n  result_type, local_ns\n)
+activate CE #F9EBEA
+
+alt result_type == "table" AND result_df in ns
+    CE -> CE : data = ns["result_df"]\nValidate: isinstance(DataFrame or Series)
+    CE --> TP : (TABLE, result_df, None, {})
+
+else result_type == "figure" AND result_fig in ns
+    CE -> CE : fig = ns["result_fig"]\nValidate: isinstance(Figure, Axes,\nor SeabornGrid)
+    CE --> TP : (FIGURE, None, result_fig, {})
+
+else "__error__" key in ns
+    CE --> TP : (UNKNOWN, None, None,\n{ "execution": error_message })
+
+else result_df / result_fig missing from ns
+    CE --> TP : (UNKNOWN, None, None,\n{ "missing": variable_name })
+end
+
+deactivate CE
+TP --> ST : ctx["code_results"] updated
+deactivate TP
+
+ST -> ST : progress.progress(95%)
+
+== Memory Storage ==
+
+ST -> MS : store_exchange(\n  prompt,\n  generated_code,\n  output_summary\n)
+activate MS #E8DAEF
+
+MS -> MS : Build memory_text:\n"user_prompt: …, agent_code: …,\n result_type: …"
+
+MS -> MS : embed_documents([memory_text])\nvia nomic-embed-text (GPU)
+
+MS -> MS : InMemoryStore.put(\n  namespace, uuid_key, {\n    MEMORY_KEY: memory_text,\n    MEMORY_TS: ISO timestamp,\n    AGENT_CODE: generated_code\n  }\n)
+
+MS -> MS : _trim_namespace(max=5)\nEvict oldest if over limit
+
+MS --> ST : stored ✓
+deactivate MS
+
+ST -> ST : progress.progress(100%)
+
+== Result Rendering ==
+
+ST -> ST : Determine active result tab:\nresult_type == TABLE → "Data View"\nresult_type == FIGURE → "Visualizations"
+
+alt result_type == TABLE
+    ST -> U : 📊 **Data View** tab\nst.dataframe(result_df)\nDescriptive statistics expander
+else result_type == FIGURE
+    ST -> U : 🎨 **Visualizations** tab\nst.pyplot(result_fig)
+else Error occurred
+    ST -> U : ⚠️ flexible_error() callout\nwith error message + retry prompt
+end
+
+ST -> U : 💻 **Code Snippet** tab\nst.code(generated_code,\n  language="python")
+
+ST -> U : 💬 Chat history appended\n(st.chat_message "assistant")
+
+deactivate ST
+
+@enduml

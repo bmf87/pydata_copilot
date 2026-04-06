@@ -1,0 +1,124 @@
+@startuml PyData Copilot — Part 1: Prompt Intake & Context Retrieval
+
+skinparam backgroundColor #FAFAFA
+skinparam sequence {
+    ArrowColor #2C3E50
+    LifeLineBorderColor #95A5A6
+    LifeLineBackgroundColor #ECF0F1
+    ParticipantBorderColor #2980B9
+    ParticipantBackgroundColor #D6EAF8
+    ParticipantFontColor #1A252F
+    ParticipantFontStyle bold
+    ActorBorderColor #27AE60
+    ActorBackgroundColor #D5F5E3
+    ActorFontColor #1A252F
+    NoteBackgroundColor #FDFEFE
+    NoteBorderColor #BDC3C7
+    NoteFontColor #2C3E50
+    BoxBackgroundColor #F2F3F4
+    BoxBorderColor #BDC3C7
+    DividerBackgroundColor #D6DBDF
+    DividerFontColor #2C3E50
+}
+skinparam ArrowFontColor #2C3E50
+skinparam defaultFontColor #2C3E50
+skinparam ArrowThickness 1.5
+skinparam ParticipantPadding 10
+
+title <size:14><b>PyData Copilot — Part 1 of 3</b></size>\nPrompt Intake, Memory Retrieval & Intent Classification
+
+actor User as U #D5F5E3
+participant "Streamlit UI\n(streamlit_app.py)" as ST #D6EAF8
+participant "Turn Pipeline\n(turn.py)" as TP #FDEBD0
+participant "Memory Store\n(memory_store.py)" as MS #E8DAEF
+participant "Embedding Model\n(nomic-embed-text\nGPU)" as EM #D5F5E3
+participant "Intent Classifier\n(user_intent.py)" as IC #FAD7A0
+
+== User Submits Prompt ==
+
+U -> ST : Natural language prompt\nvia st.chat_input
+activate ST #D6EAF8
+
+ST -> ST : Append user message\nto pydc.messages
+ST -> ST : Render user bubble\n(st.chat_message)
+ST -> ST : Initialize progress bar\n+ status label container
+
+note right of ST
+  Pipeline steps execute
+  sequentially. Progress bar
+  updates between each step.
+end note
+
+== Step 1 of 5 — Memory Retrieval ==
+
+ST -> TP : get_relevant_memories(ctx)\ncalled via steps pipeline
+activate TP #FDEBD0
+
+TP -> MS : get_relevant_memories(\n  query = prompt,\n  limit = 3,\n  score_threshold = 0.52\n)
+activate MS #E8DAEF
+
+MS -> MS : _trim_namespace(max=5)\nEvict oldest memories if over limit
+
+MS -> EM : embed_query(prompt)
+activate EM #D5F5E3
+note right of EM
+  Produces a 768-dimensional
+  vector representing the
+  semantic meaning of
+  the user's prompt.
+end note
+EM --> MS : query_embedding [float x 768]
+deactivate EM
+
+MS -> MS : InMemoryStore.search(\n  namespace = (session, id, memories),\n  query = query_embedding\n)
+
+note right of MS
+  Cosine similarity computed
+  between query vector and all
+  stored memory embeddings.
+  Items below score 0.52
+  are filtered out.
+end note
+
+MS --> TP : List[Dict] — matched memories\n(past exchanges + dataset summaries)
+deactivate MS
+
+TP --> ST : ctx["memories"] updated
+deactivate TP
+
+ST -> ST : progress.progress(20%)
+ST -> ST : status.text("Classifying intent…")
+
+== Step 2 of 5 — Intent Classification ==
+
+ST -> TP : classify_intent(ctx)
+activate TP #FDEBD0
+
+TP -> IC : classify_intent(\n  user_text = prompt,\n  pydc = session_state\n)
+activate IC #FAD7A0
+
+IC -> IC : Casefold prompt text
+
+alt NEW_KEYWORDS detected\n("create", "start", "new plot", "reset"…)
+    IC -> IC : return NEW_USER_INTENT
+else EDIT_KEYWORDS detected\n("add", "modify", "adjust", "also"…)
+    IC -> IC : return EDIT_USER_INTENT
+else No keyword match
+    IC -> IC : Heuristic fallback:\nif pydc.table or pydc.figure exists\n→ EDIT_USER_INTENT\nelse → NEW_USER_INTENT
+end
+
+IC --> TP : intent: str\n(constants.NEW_USER_INTENT or\n constants.EDIT_USER_INTENT)
+deactivate IC
+
+TP --> ST : ctx["user_intent"] updated
+deactivate TP
+
+ST -> ST : progress.progress(35%)
+
+note over ST, IC
+  **Continues in Part 2:** Prompt Construction → LLM Inference → Code Execution → Result Rendering
+end note
+
+deactivate ST
+
+@enduml
