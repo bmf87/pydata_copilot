@@ -27,6 +27,13 @@ jobs:
           # Exclude directories that contain binary/design files not needed on HF Spaces
           git rm -rf --cached ui/images/ design/ || true
           
+          # Swap READMEs: replace GitHub README with HF Spaces-specific version
+          # HF_README.md has the correct YAML frontmatter (title, sdk, emoji, etc.)
+          # and uses public URLs safe for the HF Spaces environment.
+          cp HF_README.md README.md
+          git rm --cached HF_README.md || true
+          git add README.md
+          
           # Commit the current state as a single fresh commit
           git commit -m "Sync to HF Spaces"
           

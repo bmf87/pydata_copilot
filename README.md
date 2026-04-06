@@ -1,19 +1,35 @@
----
-title: PyData Copilot
-emoji: 📊
-colorFrom: blue
-sdk: docker
-app_file: streamlit_app.py
-pinned: true
-license: apache-2.0
----
-
-
 
 
 # 📊 PyData Copilot
 
 PyData Copilot is a conversational data analysis application designed to streamline the exploration and visualization of complex datasets. Built primarily on a local-first stack, it empowers users to chat with their data using advanced Large Language Models without compromising privacy or requiring external API dependencies. By simply uploading common file formats such as CSV, Excel, or Parquet files, users can instantly retrieve descriptive statistics, execute data transformations, and generate rich visualizations through intuitive natural language prompting. Whether you are a seasoned data scientist or a business analyst, PyData Copilot seamlessly bridges the gap between raw tabular data and actionable insights within a responsive chat interface.
+
+
+## How to Use
+
+1. **Upload a dataset** — drag and drop a `.csv`, `.xlsx`, `.xls`, or `.parquet` file into the sidebar uploader
+2. **Ask a question** — type a natural language question about your data in the chat input
+3. **View results** — results appear in the **Data View** (tables), **Visualizations** (charts), and **Code Snippet** tabs
+
+### Example Prompts
+
+- *"Show me the top 10 rows sorted by revenue descending"*
+- *"Plot a histogram of customer ages"*
+- *"What is the correlation between price and quantity sold?"*
+- *"Add a regression line to the scatter plot"*
+
+## Tech Stack
+
+| Component | Technology |
+|---|---|
+| UI Framework | Streamlit |
+| LLM Runtime | llama-cpp-python (CUDA) |
+| Inference Model | Qwen2.5-Coder 7B Q4_K_M (DPO fine-tuned) |
+| Embedding Model | nomic-embed-text-v1.5 |
+| Memory Store | LangGraph InMemoryStore + LangChain |
+| Data Processing | Pandas, NumPy |
+| Visualization | Matplotlib, Seaborn |
+| Deployment | Docker on Hugging Face Spaces (NVIDIA T4) |
 
 
 
