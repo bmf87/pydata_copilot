@@ -22,7 +22,7 @@ def chat_once(messages: List[Dict[str, str]], **gen_kwargs) -> str:
 
 def chat_stream(messages: List[Dict[str, str]], **gen_kwargs) -> Generator[str, None, None]:
     """
-    Stream tokens from the LLM. Use if UI/UX requires real-time updates.
+    Stream tokens from the LLM. Use when UI/UX requires real-time updates.
     
     Args:
         messages (List[Dict[str, str]]): List of messages to send to the LLM.

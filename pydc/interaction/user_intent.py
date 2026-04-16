@@ -28,5 +28,5 @@ def classify_intent(user_text: str, pydc: PydcSessionWrapper) -> str:
     if any(phrase.casefold() in text_cf for phrase in EDIT_KEYWORDS):
         return constants.EDIT_USER_INTENT
 
-    # Default/Naive Heuristic: if there's a table or plot in session, default to edit
+    # Default/Naive Heuristic: if there's a table or figure in session, default to edit
     return constants.EDIT_USER_INTENT if pydc.table is not None or pydc.figure is not None else constants.NEW_USER_INTENT

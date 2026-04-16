@@ -37,7 +37,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# PreLoad (warm LLM on startup
+# PreLoad (warm LLM on startup)
 llm = inference.load_inference_model()
 
 # Load custom CSS
@@ -84,7 +84,7 @@ def get_session_id():
     session_id = get_script_run_ctx().session_id
     return session_id
 
-# ------ Begin Layout ------
+# ------ Begin UI Layout ------
 
 # Sidebar (File Upload & Dataset Info)
 with st.sidebar:
@@ -330,7 +330,6 @@ if pydc.df is not None and pydc.has_asked_question:
     with col1:
         st.subheader("📊 Output Workspace")
     with col2:
-        #st.session_state.show_code = st.toggle("Unhide Code Tab", value=st.session_state.show_code)
         pydc.show_code = st.toggle("Unhide Code Tab", value=pydc.show_code)
         
     tabs_list = [constants.DATA_VIEW_TAB, constants.VISUALIZATIONS_TAB]
@@ -359,7 +358,7 @@ if pydc.df is not None and pydc.has_asked_question:
     if pydc.show_code:
         tab_code = tabs[tabs_list.index(constants.CODE_SNIPPET_TAB)]
             
-    # TAB 1: Tabular Data View 
+    # Initial Tab 1: Tabular Data View 
     with tab_data_view:
         
         log.debug("df_row_slider initialized to %s", pydc.df_row_slider)
@@ -393,7 +392,7 @@ if pydc.df is not None and pydc.has_asked_question:
             st.markdown("**Descriptive Statistics (Aggregations)**")
             st.dataframe(str_df_stats, width='stretch')
         
-    # TAB 2: Data Visualizations
+    # Initial Tab 2: Data Visualizations
     with tab_visualizations:
         st.markdown("**Visual Display (Matplotlib/Seaborn)**")
         

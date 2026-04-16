@@ -8,7 +8,7 @@ from pydc.util.constants import (
 log = st.logger.get_logger(__name__)
 
 def _get_df_info(pydc: PydcSessionWrapper, rows: int = 3) -> str:
-    # Extract df schema and small data sample
+    # Extract df schema and data sample
     #df_info = f"Dataframe Name: {pydc.file_name}\n\n"
     df_info = f"Columns and Data Types:\n{pydc.df.dtypes.to_string()}\n\n"
     df_info += f"Sample Data (first {rows} rows):\n{pydc.df.head(rows).to_csv(index=False)}\n"
@@ -163,15 +163,15 @@ def _memory_to_dict(memory_str: str) -> dict:
     memory_dict = {}
     
     for item in items:
-      log.debug(f"Processing new memory item => [{item}]")
+      #log.debug(f"Processing new memory item => [{item}]")
       try:
             #key, value = item.split(": ", 1)
             key, _, value = item.partition(": ")
-            log.debug(f"Split Memory Item [Key]: {key}\nKey: {key} ->  Value: {value}")
+            #log.debug(f"Split Memory Item [Key]: {key}\nKey: {key} ->  Value: {value}")
             memory_dict[key.strip()] = value.strip()
       except ValueError: 
             log.warning(f"[ValueError] - Could not parse memory item: {item}")
-            continue# Handle cases where there is no colon or value
+            continue# Handle cases where with no colon or value
             
     return memory_dict
     
@@ -181,21 +181,18 @@ def _parse_string_to_yaml(memory_str: str) -> str:
    log.debug(f"[YAML] - Parsed memory to yaml:\n {yaml_str}")
    return yaml_str
 
-def _get_memories(memories: list[dict]) -> tuple[str, str]:
-    memory_context, agent_code = "", ""
+def _get_memories(memories: list[dict]) -> str:
+    memory_context = ""
     if memories:
-      memories.sort(key=lambda m: m.get(MEMORY_TS, ""))
-      # Get latest agent code
-      agent_code = memories[-1].get(AGENT_CODE, "")
       for mem in memories:
           memory_str = mem.get(MEMORY_KEY, "")
           if memory_str:
             memory_context += f"- {_parse_string_to_yaml(memory_str)}\n"
       memory_context += "\n"
-    return memory_context, agent_code
+    return memory_context
 
 def build_new_coding_prompt(question: str, pydc: PydcSessionWrapper, memories: list[dict] = None) -> list[dict[str, str]]:
-    df_info = _get_df_info(pydc, rows=3)
+    df_info = _get_df_info(pydc, rows=5)
     
     prompt = [
         {"role":  "system", "content": f'''
@@ -242,9 +239,11 @@ def build_new_coding_prompt(question: str, pydc: PydcSessionWrapper, memories: l
     return prompt
 
 def build_editing_code_prompt(question: str, pydc: PydcSessionWrapper, memories: list[dict] = None) -> list[dict[str, str]]:
-    memory_context, current_code = _get_memories(memories)
+    memory_context = _get_memories(memories)
+    df_info = _get_df_info(pydc, rows=5)
+    current_code = pydc.generated_code
    
-    log.debug(f"[Current Code]:\n{current_code}\n")
+    log.info(f"<CURRENT_CODE>:\n{current_code}\n")
          
     prompt = [
        {"role":  "system", "content": f'''
@@ -301,6 +300,9 @@ def build_editing_code_prompt(question: str, pydc: PydcSessionWrapper, memories:
      <MEMORIES>
       {memory_context}
      </MEMORIES>
+
+     Here is information about the user's dataframe (variable name: `df`):
+     {df_info}
 
      <CURRENT_CODE>
      {current_code}

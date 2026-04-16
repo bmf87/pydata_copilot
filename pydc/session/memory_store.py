@@ -20,7 +20,7 @@ def _get_store() -> InMemoryStore:
             index={
                 "embed": get_langchain_embeddings(),
                 "dims": 768,  # nomic-embed-text dimensionality
-                "fields": [MEMORY_KEY], # Tells langgraph to embed the MEMORY_KEY field of value dict
+                "fields": [MEMORY_KEY], # embed MEMORY_KEY field of value dict
             }
         )
     return st.session_state.memory_store
@@ -121,25 +121,29 @@ def store_exchange(user_prompt: str, ai_code: str, output_type: str) -> None:
     key = str(uuid_lib.uuid4())
     store.put(namespace, key, value)
 
-def _get_relevant_memories(query: str, limit: int = 5) -> list:
+def _get_relevant_memories(query: str, limit: int = 1000) -> list:
     """
     Retrieves the raw memory items from the store based on the user's new query.
-    Returns up to limit number of memories, ranked by similarity. May include 
+    Returns memories ranked by similarity. May include 
     memories that are not relevant to the query (fillers).
 
     Args:
         query: The user's query.
-        limit: The maximum number of memories to retrieve.
+        limit: The maximum number of memories to retrieve from the underlying store.
 
     Returns:
         List of language graph SearchItem objects containing scores and values.
     """
     store = _get_store()
     namespace = _get_namespace()
-    
-    # Automatically embeds query via the index configuration & performs cosine similarity
-    items = store.search(namespace, query=query, limit=limit)
-    return items
+
+    # Embeds query via the index configuration & performs cosine similarity against all items
+    similar_items = store.search(namespace, query=query, limit=limit)
+    all_items = store.search(namespace, filter={})
+    log.info(f"Current Memory Store Size: {len(all_items)}")
+    log.info(f"Current Similar Items (from raw search): {len(similar_items)}")
+
+    return similar_items
 
 def get_relevant_memories(query: str, limit: int = 5, trim_threshold: int = 5, score_threshold: float = 0.52) -> List[Dict[str, Any]]:
     """
@@ -155,19 +159,27 @@ def get_relevant_memories(query: str, limit: int = 5, trim_threshold: int = 5, s
         List of dict - for easy prompt construction 
     """
     _trim_namespace(trim_threshold)
-    raw_items = _get_relevant_memories(query, limit=limit)
+    # Get all results first (pass a very large limit)
+    raw_items = _get_relevant_memories(query, limit=1000)
     
-    relevant_memories = []
+    valid_items = []
     for item in raw_items:
         # Check if the item has an explicit embedded similarity score
         score = getattr(item, 'score', 0.0)
-        log.debug(f"Memory item: {item} => score: {score}")
         
-        # memory store items returned via search typically have .score populated 
+        # Keep items above the semantic similarity threshold
         if score and score >= score_threshold:
-            relevant_memories.append(item.value)
-            
-    return relevant_memories
+            valid_items.append(item)
+            log.debug(f"Relevant memory kept: {item}\nSemantic similarity score: {score}")
+
+    # Order the memories by MEMORY_TS (most recent first) and then rank by score (highest first).
+    # Python sort is stable, so sort by a tuple: (score, timestamp) descending
+    valid_items.sort(key=lambda x: (getattr(x, 'score', 0.0), x.value.get(MEMORY_TS, "")), reverse=True)
+    
+    # Apply requested limit
+    limited_items = valid_items[:limit]
+    
+    return [item.value for item in limited_items]
 
 def _trim_namespace(max_memories: int, ts_key: str = MEMORY_TS):
     

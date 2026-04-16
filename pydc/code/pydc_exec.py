@@ -87,13 +87,13 @@ def parse_llm_response(raw_response: str) -> Dict[str, Any]:
     raw_response = _strip_markdown_fence(raw_response)
     
     try:
-        # FAST PATH: IF valid JSON (with correctly escaped \" quotes) 
+        # FAST PATH: IF valid JSON (with correctly escapes) 
         # then just let the native json library decode it cleanly.
         result = json.loads(raw_response)
     except json.JSONDecodeError:
         # FALLBACK: The LLM likely added raw newlines inside the string! 
         # Run our targeted normalizer on it and re-attempt.
-        log.warn("Standard JSON parse failed, attempting code block raw newline normalization...")
+        log.warn("Standard JSON parse failed, attempting raw newline normalization on 'code' field...")
         normalized_response = _normalize_code_field(raw_response)
         log.debug(f"[normalized_response]: {normalized_response}")
         
@@ -120,8 +120,7 @@ def parse_llm_response(raw_response: str) -> Dict[str, Any]:
         "return": ret_name,
         "errors": errors,
     }
-
-
+        
 def run_llm_code(code: str, df: pd.DataFrame) :
     log.debug(f"[run_llm_code] - code: {code}")
     log.debug(f"[run_llm_code] - df: {df}")
@@ -139,7 +138,7 @@ def run_llm_code(code: str, df: pd.DataFrame) :
         exec(code, global_ns, local_ns)  # variables end up in local_ns
     except Exception as e:
         log.error(f"Error executing LLM code: {e}")
-        # Safely insert the error into the namespace so classify_code_result can see it
+        # Safely insert error into namespace so classify_code_result can see it
         local_ns["__error__"] = f"{type(e).__name__}: {str(e)}"
         
     return local_ns
@@ -155,6 +154,28 @@ def is_displayable_plot(obj) -> bool:
         isinstance(obj, SEABORN_GRID_TYPES)
     )
 
+def inspect_error(error: str) -> str:
+    error = error.strip()
+    
+    if error.startswith("KeyError"):
+        # Match multiple missing columns (Pandas format: KeyError: "None of [Index(['A', 'B']...")
+        multi_match = re.search(r"Index\(\[([^\]]+)\]", error)
+        if multi_match:
+            cols_str = multi_match.group(1)
+            log.error(f"KeyError Found (Multiple): {cols_str}")
+            return f"code references columns not contained in the dataframe: '{cols_str}'"
+            
+        # Match single missing column (Pandas format: KeyError: 'column_name')
+        single_match = re.search(r"KeyError:\s*'([^']+)'", error)
+        if single_match:
+            col = single_match.group(1)
+            log.error(f"KeyError Found (Single): '{col}'")
+            return f"code references a column not contained in the dataframe: '{col}'"
+            
+        log.error(f"KeyError Found: {error}")
+        return "code references a column not contained in the dataframe"
+        
+    return error
 
 ResultType = Literal["table", "figure", "unknown"]
 
@@ -170,7 +191,11 @@ def classify_code_result(result_type: str, ns: Dict[str, Any]) -> Tuple[ResultTy
     log.debug(f"[classify_code_result] - ns keys: {list(ns.keys())}")  
     
     if "__error__" in ns:
-        errors["execution"] = f"The generated code encountered an error during execution: <b>{ns['__error__']}</b>. Please modify your prompt and try again."
+        error_msg = inspect_error(ns['__error__'])
+        errors["execution"] = f"The generated code encountered an error during execution: <br /> \
+        <b>{error_msg}</b>. <br /> \
+        Analyze your dataset to refine your prompt."
+        
         return constants.RESULT_TYPE_UNKNOWN, None, None, errors
         
     if not ns:

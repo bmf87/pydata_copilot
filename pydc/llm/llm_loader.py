@@ -42,8 +42,8 @@ def load_embedding_model() -> Llama:
 
 class LlamaCPPEmbeddings(Embeddings):
     """
-    Wrapper around a loaded llama_cpp Llama embeddings model to conform to 
-    LangChain's Embeddings interface so it can be automatically used by InMemoryStore.
+    Wrapper for llama_cpp Llama embeddings model to conform to LangChain's
+    Embeddings interface, allowing it to be automatically used by InMemoryStore.
     """
     def __init__(self, model: Llama):
         self.model = model

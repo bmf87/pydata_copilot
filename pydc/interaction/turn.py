@@ -25,8 +25,9 @@ def get_relevant_memories(ctx: Dict) -> Dict:
         "prompt", "memory_store_size", "memory_store_hits")
     )
     # Retrieve prior session-based memories
-    memories = memory_store.get_relevant_memories(prompt, memory_store_size, memory_store_hits)
-    log.debug(f"Retrieved memory size: {len(memories)}\nMemories:\n{memories}")
+    memories = memory_store.get_relevant_memories(prompt, memory_store_hits, memory_store_size)
+    log.info(f"Retrieved memories:\nMemory Store Hits: {len(memories)} of {memory_store_hits}")
+    log.debug(f"\nMemories:\n{memories}")
     ctx["memories"] = memories
     return ctx
 
@@ -34,7 +35,7 @@ def classify_intent(ctx: Dict) -> Dict:
     prompt = ctx["prompt"]
     pydc: PydcSessionWrapper = ctx["pydc"]
     intent = user_intent.classify_intent(prompt, pydc)
-    log.info(f"Inferred User Intent=={intent}")
+    log.info(f"Inferred User Intent: `{intent}`")
     ctx["user_intent"] = intent
     return ctx
 
@@ -105,7 +106,7 @@ def call_llm(ctx: Dict) -> Dict:
 def _show_errors(title: str, errors: str):  
     log.error(f"[LLM ERROR] - {errors}")
     flexible_error(
-        message=f"{title}: {errors}<br><br>Please try again!",
+        message=f"{title}: {errors}<br><br>Refine your prompt and try again!",
         container=st,
         font_size=16,
         alignment="left", 
@@ -120,7 +121,7 @@ def execute_code(ctx: Dict) -> Dict:
     prompt = ctx["prompt"]
     # Show JSON parsing issues
     if pydc.errors:
-        log.debug(f"[turn] - LLM Response Error: {pydc.errors}")
+        log.debug(f"LLM Response Error: {pydc.errors}")
         _show_errors("LLM Response Parsing Error: ", pydc.errors)
     
     # Execute LLM-generated code and classify result
