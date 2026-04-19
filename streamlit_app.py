@@ -15,8 +15,8 @@ import pydc.util.app_config as app_config
 import pydc.llm.inference as inference
 import pydc.code.pydc_exec as pydc_exec
 from pydc.interaction.turn import (
-    get_relevant_memories, classify_intent, build_coding_prompt, 
-    call_llm, execute_code
+    get_relevant_memories, classify_intent, 
+    build_coding_prompt, call_llm, execute_code
 )
 
 
@@ -50,11 +50,11 @@ def get_image_path(image_key: str):
     If running locally, fetch from local disk using IMAGE_LKP.
     """
     if os.environ.get("SPACE_ID"):
-        # We are on Hugging Face Spaces! Extract filename and point to GitHub raw
+        #  On Hugging Face Spaces - extract filename and point to GitHub raw
         filename = Path(constants.IMAGE_LKP[image_key]).name
         return f"https://github.com/bmf87/pydata_copilot/blob/main/ui/images/{filename}?raw=true"
     else:
-        # We are developing locally!
+        # Developing locally
         return constants.IMAGE_LKP[image_key]
 
 def init_images():

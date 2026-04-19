@@ -14,4 +14,4 @@ showErrorDetails="full"
 toolbarMode="auto"
 
 [server]
-maxUploadSize = 10
+maxUploadSize = 5
